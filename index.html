@@ -5,6 +5,119 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SPM: The Comeback Arc</title>
+  
+/* CHAPTER SKILL TREE */
+.skill-tree-section {
+  margin-top: 28px;
+  padding: 22px;
+  border: 1px solid #39304f;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #191526, #21182c);
+}
+
+.skill-tree-heading {
+  margin-bottom: 6px;
+  font-size: 1.5rem;
+}
+
+.skill-tree-subtitle {
+  margin: 0 0 20px;
+  color: #b9afca;
+  font-size: 0.9rem;
+}
+
+.skill-tree-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.skill-tree-subject {
+  padding: 15px;
+  border: 1px solid #39304f;
+  border-radius: 14px;
+  background: #15121f;
+}
+
+.skill-tree-subject h3 {
+  margin: 0 0 14px;
+  color: #e7c9ff;
+}
+
+.skill-node {
+  padding: 12px;
+  margin-top: 10px;
+  border: 1px solid #443951;
+  border-radius: 11px;
+  background: #211b2c;
+}
+
+.skill-node h4 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.skill-node p {
+  margin: 0 0 10px;
+  color: #b9afca;
+  font-size: 0.82rem;
+}
+
+.skill-status {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  background: #39304f;
+  color: #eee2ff;
+}
+
+.skill-status.in-progress {
+  background: #49321e;
+  color: #ffd49a;
+}
+
+.skill-status.mastered {
+  background: #1e4539;
+  color: #a9f4d5;
+}
+
+.skill-node button {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid #675083;
+  border-radius: 8px;
+  background: #332344;
+  color: white;
+  cursor: pointer;
+}
+
+.skill-node button:hover {
+  background: #49305f;
+}
+
+.skill-tree-progress {
+  margin: 14px 0 20px;
+  color: #e7c9ff;
+  font-weight: bold;
+}
+
+.skill-tree-track {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #39304f;
+}
+
+.skill-tree-track div {
+  height: 100%;
+  width: 0%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #a56cff, #ff80c8);
+  transition: width 0.3s ease;
+}
+
 <style>
 :root {
   --bg: #101019;
@@ -18,6 +131,24 @@
   --red: #ff8597;
 }
 * { box-sizing: border-box; }
+  
+<section class="skill-tree-section" id="chapterSkillTree">
+  <h2 class="skill-tree-heading">🌳 Chapter Skill Tree</h2>
+  <p class="skill-tree-subtitle">
+    Every chapter is a skill to unlock. Keep training until you master it!
+  </p>
+
+  <div class="skill-tree-progress" id="skillTreeProgress">
+    0 of 8 chapters mastered
+  </div>
+
+  <div class="skill-tree-track">
+    <div id="skillTreeProgressBar"></div>
+  </div>
+
+  <div class="skill-tree-groups" id="skillTreeGroups"></div>
+</section>
+
 body {
   margin: 0;
   background: var(--bg);
@@ -147,6 +278,119 @@ footer { text-align:center; padding:25px; color:var(--muted); font-size:12px; }
 </main>
 
 <footer>Built for your SPM journey · Your progress is saved in this browser.</footer>
+
+/* CHAPTER SKILL TREE — separate from existing website data */
+const skillTreeKey = "spmComebackSkillTree";
+
+const defaultSkillNodes = [
+  { id: "am-diff", subject: "Add Math", name: "Differentiation", status: "locked" },
+  { id: "am-functions", subject: "Add Math", name: "Functions", status: "locked" },
+  { id: "phy-electricity", subject: "Physics", name: "Electricity", status: "locked" },
+  { id: "phy-forces", subject: "Physics", name: "Force and Motion", status: "locked" },
+  { id: "chem-acids", subject: "Chemistry", name: "Acids and Bases", status: "locked" },
+  { id: "chem-carbon", subject: "Chemistry", name: "Carbon Compounds", status: "locked" },
+  { id: "math-stats", subject: "Mathematics", name: "Statistics", status: "locked" },
+  { id: "math-probability", subject: "Mathematics", name: "Probability", status: "locked" }
+];
+
+function loadSkillNodes() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(skillTreeKey));
+    if (!Array.isArray(saved)) return defaultSkillNodes.map(node => ({ ...node }));
+
+    return defaultSkillNodes.map(node => {
+      const match = saved.find(item => item.id === node.id);
+      const validStatuses = ["locked", "in-progress", "mastered"];
+
+      return {
+        ...node,
+        status: match && validStatuses.includes(match.status)
+          ? match.status
+          : node.status
+      };
+    });
+  } catch (error) {
+    return defaultSkillNodes.map(node => ({ ...node }));
+  }
+}
+
+let skillNodes = loadSkillNodes();
+
+function saveSkillNodes() {
+  localStorage.setItem(skillTreeKey, JSON.stringify(skillNodes));
+}
+
+function cycleSkillNode(id) {
+  const node = skillNodes.find(item => item.id === id);
+  if (!node) return;
+
+  const nextStatus = {
+    "locked": "in-progress",
+    "in-progress": "mastered",
+    "mastered": "locked"
+  };
+
+  node.status = nextStatus[node.status];
+  saveSkillNodes();
+  renderSkillTree();
+}
+
+function renderSkillTree() {
+  const container = document.getElementById("skillTreeGroups");
+  const progressText = document.getElementById("skillTreeProgress");
+  const progressBar = document.getElementById("skillTreeProgressBar");
+
+  if (!container || !progressText || !progressBar) return;
+
+  const subjects = [...new Set(skillNodes.map(node => node.subject))];
+  const mastered = skillNodes.filter(node => node.status === "mastered").length;
+  const percentage = skillNodes.length
+    ? Math.round((mastered / skillNodes.length) * 100)
+    : 0;
+
+  progressText.textContent =
+    `${mastered} of ${skillNodes.length} chapters mastered (${percentage}%)`;
+  progressBar.style.width = `${percentage}%`;
+
+  container.innerHTML = subjects.map(subject => {
+    const nodes = skillNodes.filter(node => node.subject === subject);
+
+    return `
+      <div class="skill-tree-subject">
+        <h3>${subject}</h3>
+        ${nodes.map(node => {
+          const labels = {
+            "locked": "🔒 Locked",
+            "in-progress": "⚔️ In Progress",
+            "mastered": "🏆 Mastered"
+          };
+
+          const nextActions = {
+            "locked": "Start training",
+            "in-progress": "Mark as mastered",
+            "mastered": "Reset chapter"
+          };
+
+          return `
+            <div class="skill-node">
+              <h4>${node.name}</h4>
+              <span class="skill-status ${node.status}">
+                ${labels[node.status]}
+              </span>
+              <button
+                type="button"
+                onclick="cycleSkillNode('${node.id}')">
+                ${nextActions[node.status]}
+              </button>
+            </div>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }).join("");
+}
+
+renderSkillTree();
 
 <script>
 const defaultTopics = [
