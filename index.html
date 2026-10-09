@@ -1,1 +1,326 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPM: The Comeback Arc</title>
+<style>
+:root {
+  --bg: #101019;
+  --panel: #1b1b29;
+  --line: #303044;
+  --purple: #bd8cff;
+  --pink: #f08bd5;
+  --text: #f5f1ff;
+  --muted: #aaa7c0;
+  --green: #7ce0b0;
+  --red: #ff8597;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.5 system-ui, sans-serif;
+}
+header {
+  padding: 24px 6%;
+  border-bottom: 1px solid var(--line);
+  background: #151521;
+}
+.brand { color: var(--purple); font-weight: 800; letter-spacing: 2px; }
+header h1 { margin: 8px 0 0; font-size: clamp(25px, 4vw, 38px); }
+header p, .muted { color: var(--muted); }
+main { max-width: 1100px; margin: auto; padding: 24px 18px 50px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+.panel {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 16px; padding: 20px; min-width: 0;
+}
+.wide { grid-column: 1 / -1; }
+h2 { font-size: 19px; margin: 0 0 15px; }
+h3 { font-size: 15px; margin: 0 0 5px; }
+.stat { font-size: 30px; font-weight: 800; }
+.purple { color: var(--purple); }
+.pink { color: var(--pink); }
+.progress, .track {
+  height: 9px; border-radius: 99px; overflow: hidden; background: #343247;
+}
+.progress > div, .track > div {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--purple), var(--pink));
+}
+.row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.topic { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.topic:last-child { border-bottom: 0; }
+.topic-info { display:flex; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.score { color: var(--muted); font-size: 13px; }
+.tag { font-size: 12px; color: var(--muted); }
+button, input, select {
+  font: inherit; border-radius: 9px; padding: 10px 12px;
+}
+button {
+  border: 0; cursor: pointer; color: #171020;
+  background: var(--purple); font-weight: 700;
+}
+button:hover { filter: brightness(1.1); }
+button.secondary { background: #343247; color: var(--text); }
+button.small { padding: 7px 10px; font-size: 12px; }
+input, select {
+  background: #11111c; color: var(--text);
+  border: 1px solid var(--line); width: 100%; min-width: 0;
+}
+form { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; margin-top: 16px; }
+.quest { display:flex; align-items:center; gap:10px; padding:10px 0; }
+.quest input { width:18px; height:18px; accent-color:var(--purple); }
+.quest label { flex:1; }
+.done { color:var(--muted); text-decoration:line-through; }
+footer { text-align:center; padding:25px; color:var(--muted); font-size:12px; }
+@media(max-width:650px) {
+  .grid { grid-template-columns:1fr; }
+  .wide { grid-column:auto; }
+  form { grid-template-columns:1fr 1fr; }
+  form input:first-child { grid-column:1/-1; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">✦ YOUR TRAINING GROUNDS</div>
+  <h1>SPM: The Comeback Arc 🐉</h1>
+  <p>Every question is training. Every mistake is data. Keep levelling up.</p>
+</header>
+
+<main>
+  <div class="grid">
+    <section class="panel">
+      <div class="tag">YOUR CURRENT RANK</div>
+      <div class="stat purple" id="level">LEVEL 1</div>
+      <p class="muted" id="rank">The Rookie · Your journey starts here.</p>
+      <div class="row"><span>Experience</span><b id="xpLabel">0 / 100 XP</b></div>
+      <div class="progress"><div id="xpBar" style="width:0%"></div></div>
+    </section>
+
+    <section class="panel">
+      <div class="tag">YOUR ACADEMIC QUEST</div>
+      <div class="stat pink" id="mastered">0%</div>
+      <p class="muted">Average score across your tracked chapters</p>
+      <div class="progress"><div id="masteryBar" style="width:0%"></div></div>
+      <p class="muted" id="topicCount">0 chapters tracked</p>
+    </section>
+
+    <section class="panel wide">
+      <h2>🎯 Weakness Radar</h2>
+      <p class="muted">Enter your latest practice scores. Start with your weakest chapter and work upwards.</p>
+      <div id="topics"></div>
+      <h3 style="margin-top:18px">＋ Add a chapter</h3>
+      <form id="topicForm">
+        <input id="topicName" placeholder="Subject — chapter name" required>
+        <input id="topicScore" type="number" min="0" max="100" placeholder="Score %" required>
+        <select id="topicConfidence" aria-label="Confidence">
+          <option value="1">Confidence: 1/5</option>
+          <option value="2">Confidence: 2/5</option>
+          <option value="3" selected>Confidence: 3/5</option>
+          <option value="4">Confidence: 4/5</option>
+          <option value="5">Confidence: 5/5</option>
+        </select>
+        <button>Add</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>⚔️ Today's Missions</h2>
+      <p class="muted">Complete a mission to earn XP. Small wins count.</p>
+      <div id="quests"></div>
+      <button class="secondary" id="resetQuests">Reset daily quests</button>
+    </section>
+
+    <section class="panel">
+      <h2>🧭 Next Recommended Mission</h2>
+      <div id="recommendation"></div>
+      <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
+      <h3>How to train a weak chapter</h3>
+      <p class="muted">1. Review the concept.<br>2. Attempt exam-style questions.<br>3. Mark your work honestly.<br>4. Update your score after practising.</p>
+    </section>
+  </div>
+</main>
+
+<footer>Built for your SPM journey · Your progress is saved in this browser.</footer>
+
+<script>
+const defaultTopics = [
+  { id: 1, name: "Add Math — Differentiation", score: 25, confidence: 2 },
+  { id: 2, name: "Physics — Electricity", score: 50, confidence: 3 },
+  { id: 3, name: "Chemistry — Acids and Bases", score: 65, confidence: 3 },
+  { id: 4, name: "Mathematics — Statistics", score: 80, confidence: 4 }
+];
+
+const defaultQuests = [
+  { id: 1, name: "Solve 3 questions from a weak chapter", xp: 20, done: false },
+  { id: 2, name: "Revise one concept for 20 minutes", xp: 20, done: false },
+  { id: 3, name: "Correct mistakes from a practice paper", xp: 30, done: false },
+  { id: 4, name: "Recall yesterday's topic without notes", xp: 15, done: false }
+];
+
+function load(key, fallback) {
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+let topics = load("comebackTopics", defaultTopics);
+let quests = load("comebackQuests", defaultQuests);
+let bonusXP = load("comebackBonus", 0);
+
+function save() {
+  localStorage.setItem("comebackTopics", JSON.stringify(topics));
+  localStorage.setItem("comebackQuests", JSON.stringify(quests));
+  localStorage.setItem("comebackBonus", JSON.stringify(bonusXP));
+}
+
+function totalXP() {
+  return bonusXP + quests.reduce((sum, q) => sum + (q.done ? q.xp : 0), 0);
+}
+
+function renderTopics() {
+  const area = document.getElementById("topics");
+  if (!topics.length) {
+    area.innerHTML = '<p class="muted">No chapters yet. Add your first one below!</p>';
+  } else {
+    area.innerHTML = [...topics]
+      .sort((a, b) => a.score - b.score)
+      .map(t => {
+        const status = t.score < 40 ? "High priority" :
+          t.score < 70 ? "Needs practice" : "Building mastery";
+        return `
+          <div class="topic">
+            <div class="topic-info">
+              <div><b>${escapeHTML(t.name)}</b><br>
+                <span class="tag">${status} · Confidence ${t.confidence}/5</span>
+              </div>
+              <div class="score">${t.score}%</div>
+            </div>
+            <div class="track"><div style="width:${t.score}%"></div></div>
+            <div class="row" style="margin-top:9px">
+              <label class="score" for="score-${t.id}">Update score</label>
+              <div style="display:flex;gap:7px;align-items:center">
+                <input id="score-${t.id}" type="number" min="0" max="100"
+                  value="${t.score}" style="width:78px;padding:6px">
+                <button class="small" onclick="updateScore(${t.id})">Save</button>
+                <button class="small secondary" onclick="removeTopic(${t.id})">×</button>
+              </div>
+            </div>
+          </div>`;
+      }).join("");
+  }
+
+  const avg = topics.length
+    ? Math.round(topics.reduce((sum, t) => sum + t.score, 0) / topics.length)
+    : 0;
+  document.getElementById("mastered").textContent = avg + "%";
+  document.getElementById("masteryBar").style.width = avg + "%";
+  document.getElementById("topicCount").textContent =
+    topics.length + " chapter" + (topics.length === 1 ? "" : "s") + " tracked";
+
+  const weakest = [...topics].sort((a, b) =>
+    (a.score - a.confidence * 3) - (b.score - b.confidence * 3))[0];
+
+  document.getElementById("recommendation").innerHTML = weakest
+    ? `<h3 class="pink">${escapeHTML(weakest.name)}</h3>
+       <p class="muted">Latest score: ${weakest.score}% · Confidence: ${weakest.confidence}/5</p>
+       <p>Mission: revise the concept, then try 3–5 questions without notes.</p>
+       <button onclick="startMission(${weakest.id})">Start this mission</button>`
+    : '<p class="muted">Add a chapter to get your first recommendation.</p>';
+}
+
+function escapeHTML(text) {
+  return String(text).replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  })[c]);
+}
+
+function renderQuests() {
+  document.getElementById("quests").innerHTML = quests.map(q => `
+    <div class="quest">
+      <input type="checkbox" id="quest-${q.id}" ${q.done ? "checked" : ""}
+        onchange="toggleQuest(${q.id})">
+      <label for="quest-${q.id}" class="${q.done ? "done" : ""}">
+        ${escapeHTML(q.name)} <span class="tag">+${q.xp} XP</span>
+      </label>
+    </div>`).join("");
+}
+
+function renderXP() {
+  const xp = totalXP();
+  const level = Math.floor(xp / 100) + 1;
+  const within = xp % 100;
+  document.getElementById("level").textContent = "LEVEL " + level;
+  document.getElementById("xpLabel").textContent = within + " / 100 XP";
+  document.getElementById("xpBar").style.width = within + "%";
+  document.getElementById("rank").textContent =
+    level < 3 ? "The Rookie · Keep showing up." :
+    level < 5 ? "The Challenger · Your skills are growing." :
+    "The SPM Warrior · Consistency is your power.";
+}
+
+function updateScore(id) {
+  const input = document.getElementById("score-" + id);
+  const score = Number(input.value);
+  if (input.value.trim() === "" || !Number.isFinite(score) || score < 0 || score > 100) {
+    alert("Enter a score between 0 and 100.");
+    return;
+  }
+  topics = topics.map(t => t.id === id ? { ...t, score } : t);
+  save(); renderTopics();
+}
+
+function removeTopic(id) {
+  topics = topics.filter(t => t.id !== id);
+  save(); renderTopics();
+}
+
+function toggleQuest(id) {
+  quests = quests.map(q => q.id === id ? { ...q, done: !q.done } : q);
+  save(); renderQuests(); renderXP();
+}
+
+function startMission(id) {
+  const topic = topics.find(t => t.id === id);
+  if (!topic) return;
+  alert("Mission started: " + topic.name +
+    "\\n\\n1. Revise the concept.\\n2. Answer 3–5 questions.\\n3. Mark your work.\\n4. Update your score!");
+}
+
+document.getElementById("topicForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const name = document.getElementById("topicName").value.trim();
+  const rawScore = document.getElementById("topicScore").value;
+  const score = Number(rawScore);
+  const confidence = Number(document.getElementById("topicConfidence").value);
+  if (!name || rawScore.trim() === "" || !Number.isFinite(score) || score < 0 || score > 100) {
+    alert("Enter a chapter name and a score from 0 to 100.");
+    return;
+  }
+  topics.push({ id: Date.now(), name, score, confidence });
+  save(); renderTopics();
+  e.target.reset();
+  document.getElementById("topicConfidence").value = "3";
+});
+
+document.getElementById("resetQuests").addEventListener("click", () => {
+  if (!confirm("Reset today's quests? Your chapter scores will stay saved.")) return;
+  quests = quests.map(q => ({ ...q, done: false }));
+  save(); renderQuests(); renderXP();
+});
+
+renderTopics();
+renderQuests();
+renderXP();
+</script>
+</body>
+</html>
+
