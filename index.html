@@ -226,9 +226,14 @@ function renderTopics() {
   document.getElementById("topicCount").textContent =
     topics.length + " chapter" + (topics.length === 1 ? "" : "s") + " tracked";
 
-  const weakest = [...topics].sort((a, b) =>
-    (a.score - a.confidence * 3) - (b.score - b.confidence * 3))[0];
+  const weakest = [...topics].sort((a, b) => {
+  // Lower scores mean more revision is needed.
+  // Lower confidence adds extra priority.
+  const priorityA = a.score - (a.confidence * 8);
+  const priorityB = b.score - (b.confidence * 8);
 
+  return priorityA - priorityB;
+})[0];
   document.getElementById("recommendation").innerHTML = weakest
     ? `<h3 class="pink">${escapeHTML(weakest.name)}</h3>
        <p class="muted">Latest score: ${weakest.score}% · Confidence: ${weakest.confidence}/5</p>
